@@ -134,6 +134,7 @@ import ARKit
 
 class ViewController: UIViewController, ARSCNViewDelegate {
 
+    var diceArray: [SCNNode] = []
     @IBOutlet var sceneView: ARSCNView!
     
     override func viewDidLoad() {
@@ -143,6 +144,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.delegate = self
         
         self.sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
+        
+        sceneView.autoenablesDefaultLighting = true
+    }
 
 //        let cube = SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0.01)
 //        let sphere = SCNSphere(radius: 0.2)
@@ -160,13 +164,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 //        node.geometry = sphere
 //
 //        sceneView.scene.rootNode.addChildNode(node)
-        sceneView.autoenablesDefaultLighting = true
-
-      
         
-        
-        
-    }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -204,6 +202,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
                     diceNode.position = SCNVector3(
                         x: hitResult.worldTransform.columns.3.x,
+                        // 半分埋まってしまうので、中心座標を上にハーフアップする
                         y: hitResult.worldTransform.columns.3.y + diceNode.boundingSphere.radius,
                         z: hitResult.worldTransform.columns.3.z
                     )
@@ -225,6 +224,17 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     // MARK: - ARSCNViewDelegate
     
+    /*
+        // removeAllDice
+     @IBAction dunc removeAlldice(_ sender: UIBarButtonItem
+    if !diceArray.isEmpty {
+    for dice in diceArray {
+    dice.removeFromParentNode()
+    }
+    }
+     
+     */
+    
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         
         if anchor is ARPlaneAnchor {
@@ -232,19 +242,20 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             print("plane detected")
             
             let planeAnchor = anchor as! ARPlaneAnchor
-
-            let plane = SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z))
+            let planeNode = createPlane(withPlaneAnchor: planeAnchor)
             
-            let gridMaterial = SCNMaterial()
-            gridMaterial.diffuse.contents = UIImage(named: "art.scnassets/grid.png")
-            plane.materials = [gridMaterial]
-            
-            let planeNode = SCNNode()
-
-            planeNode.geometry = plane
-            planeNode.position = SCNVector3(planeAnchor.center.x, 0, planeAnchor.center.z)
-            planeNode.transform = SCNMatrix4MakeRotation(-Float.pi/2, 1, 0, 0)
-            
+//            let plane = SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z))
+//
+//            let gridMaterial = SCNMaterial()
+//            gridMaterial.diffuse.contents = UIImage(named: "art.scnassets/grid.png")
+//            plane.materials = [gridMaterial]
+//
+//            let planeNode = SCNNode()
+//
+//            planeNode.geometry = plane
+//            planeNode.position = SCNVector3(planeAnchor.center.x, 0, planeAnchor.center.z)
+//            planeNode.transform = SCNMatrix4MakeRotation(-Float.pi/2, 1, 0, 0)
+//
             node.addChildNode(planeNode)
             
         } else {
@@ -254,5 +265,25 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         //guard let planeAnchor = anchor as? ARPlaneAnchor else {return}
     }
 
+    // refactoring
+    func createPlane(withPlaneAnchor planeAnchor: ARPlaneAnchor) -> SCNNode {
+ 
+        // plane
+        let plane = SCNPlane(width: CGFloat(planeAnchor.extent.x), height: CGFloat(planeAnchor.extent.z))
+    
+        let planeNode = SCNNode()
+
+        planeNode.geometry = plane
+        planeNode.position = SCNVector3(planeAnchor.center.x, 0, planeAnchor.center.z)
+        planeNode.transform = SCNMatrix4MakeRotation(-Float.pi/2, 1, 0, 0)
+        
+        
+        // grid
+        let gridMaterial = SCNMaterial()
+        gridMaterial.diffuse.contents = UIImage(named: "art.scnassets/grid.png")
+        plane.materials = [gridMaterial]
+        
+        return planeNode
+    }
 
 }
